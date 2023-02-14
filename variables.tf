@@ -1,11 +1,11 @@
 variable "region" {
-  default     = ""
+  default = ""
 }
 variable "ami-id" {
   default = ""
 }
 variable "key" {
-  default     = ""
+  default = ""
 }
 variable "secret" {
   default = ""

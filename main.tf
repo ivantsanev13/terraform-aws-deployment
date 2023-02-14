@@ -41,7 +41,7 @@ resource "aws_instance" "web" {
     host        = self.public_ip
   }
   ## Services update and install. Starting app.js and mounting to the EFS share
- provisioner "file" {
+  provisioner "file" {
     source      = "setup.sh"
     destination = "/tmp/setup.sh"
   }
@@ -66,7 +66,7 @@ resource "aws_lb_target_group" "tg" {
 }
 ## Attaching the nodes
 resource "aws_alb_target_group_attachment" "tg-attachment" {
-  count = 2
+  count            = 2
   target_group_arn = aws_lb_target_group.tg.arn
   target_id        = aws_instance.web[count.index].id
 }
@@ -76,7 +76,7 @@ resource "aws_lb" "lb" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [var.security-group-id, ]
-  subnets            = [var.subnet1-id, var.subnet2-id, var.subnet3-id ]
+  subnets            = [var.subnet1-id, var.subnet2-id, var.subnet3-id]
 
 }
 ## Here is the port that it will listed to and the request types
@@ -84,10 +84,10 @@ resource "aws_lb_listener" "listener-3000" {
   load_balancer_arn = aws_lb.lb.arn
   port              = "3000"
   protocol          = "HTTP"
-## Here the load balancer will forward the traffic to the target group and then to the nodes.
+  ## Here the load balancer will forward the traffic to the target group and then to the nodes.
   default_action {
-    type = "forward"
-    target_group_arn =aws_lb_target_group.tg.arn
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tg.arn
   }
 }
 ## Allow all outbound traffic
@@ -101,12 +101,12 @@ resource "aws_security_group_rule" "outbound" {
 }
 # Allow inbound traffic on port 22 from IP
 resource "aws_security_group_rule" "ssh" {
-  type        = "ingress"
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["93.183.137.104/32"]
-  security_group_id        = var.security-group-id
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = ["93.183.137.104/32"]
+  security_group_id = var.security-group-id
 }
 ## Allow all inbound traffic on port 3000
 /* resource "aws_security_group_rule" "webserver" {
@@ -129,40 +129,40 @@ resource "aws_security_group_rule" "postgres-internal" {
 }
 
 resource "aws_launch_template" "ubuntu-template" {
-  name = "ubuntu-template"
-  image_id           = "ami-0d1ddd83282187d18"
+  name          = "ubuntu-template"
+  image_id      = "ami-0d1ddd83282187d18"
   instance_type = "t2.micro"
   key_name      = "ssh-key"
   network_interfaces {
     associate_public_ip_address = true
-    device_index = 0
-    subnet_id = var.subnet1-id
-    security_groups = [var.security-group-id]
+    device_index                = 0
+    subnet_id                   = var.subnet1-id
+    security_groups             = [var.security-group-id]
   }
   user_data = filebase64("${path.module}/setup.sh")
 }
 ## Creating the autoscaling group within eu-central-1 availability zone
 resource "aws_autoscaling_group" "asg" {
-# Defining the availability Zone in which AWS EC2 instance will be launched
-  vpc_zone_identifier  =  [var.subnet1-id]
-  name                      = "autoscalegroup"
-# Maximum number of AWS EC2 instances while scaling
-  max_size                  = 4
-# Minimum and desired number of AWS EC2 instances while scaling
-  min_size                  = 0
-  desired_capacity          = 0
-# Time after which AWS EC2 instance comes into service before checking health.
+  # Defining the availability Zone in which AWS EC2 instance will be launched
+  vpc_zone_identifier = [var.subnet1-id]
+  name                = "autoscalegroup"
+  # Maximum number of AWS EC2 instances while scaling
+  max_size = 4
+  # Minimum and desired number of AWS EC2 instances while scaling
+  min_size         = 0
+  desired_capacity = 0
+  # Time after which AWS EC2 instance comes into service before checking health.
   health_check_grace_period = 30
   health_check_type         = "EC2"
-# force_delete deletes the Auto Scaling Group without waiting for all instances in the pool to terminate
-  force_delete              = true
-# Defining the termination policy where the oldest instance will be replaced first 
-  termination_policies      = ["OldestInstance"]
-# Scaling group is dependent on autoscaling launch configuration because of AWS EC2 instance configurations
+  # force_delete deletes the Auto Scaling Group without waiting for all instances in the pool to terminate
+  force_delete = true
+  # Defining the termination policy where the oldest instance will be replaced first 
+  termination_policies = ["OldestInstance"]
+  # Scaling group is dependent on autoscaling launch configuration because of AWS EC2 instance configurations
   mixed_instances_policy {
     launch_template {
       launch_template_specification {
-        launch_template_id      = aws_launch_template.ubuntu-template.id
+        launch_template_id = aws_launch_template.ubuntu-template.id
       }
     }
   }
@@ -200,10 +200,10 @@ resource "aws_cloudwatch_metric_alarm" "elb-request-count-above" {
   statistic           = "Sum"
   threshold           = 10
   alarm_description   = "This metric monitors the total number of requests to the ELB"
-  alarm_actions = ["${aws_autoscaling_policy.scale-up.arn}"]
+  alarm_actions       = ["${aws_autoscaling_policy.scale-up.arn}"]
   dimensions = {
-    LoadBalancer = aws_lb.lb.arn_suffix
-    TargetGroup = aws_lb_target_group.tg.arn_suffix
+    LoadBalancer     = aws_lb.lb.arn_suffix
+    TargetGroup      = aws_lb_target_group.tg.arn_suffix
     AvailabilityZone = "eu-central-1a"
   }
 }
@@ -218,25 +218,25 @@ resource "aws_cloudwatch_metric_alarm" "elb-request-count-below" {
   statistic           = "Sum"
   threshold           = 10
   alarm_description   = "This metric monitors the total number of requests to the ELB"
-  alarm_actions = ["${aws_autoscaling_policy.scale-down.arn}"]
+  alarm_actions       = ["${aws_autoscaling_policy.scale-down.arn}"]
   dimensions = {
-    LoadBalancer = aws_lb.lb.arn_suffix
-    TargetGroup = aws_lb_target_group.tg.arn_suffix
+    LoadBalancer     = aws_lb.lb.arn_suffix
+    TargetGroup      = aws_lb_target_group.tg.arn_suffix
     AvailabilityZone = "eu-central-1a"
   }
 }
 ## PostgreSQL 
 resource "aws_db_instance" "postgresql" {
-  allocated_storage    = 10
-  engine               = "postgres"
-  engine_version       = "13.7"
-  instance_class       = "db.t3.micro"
-  db_name              = "db_name"
-  username             = "user"
-# To provide the password in secure way...
-  password             = "pass"
-  skip_final_snapshot  = true
-  publicly_accessible  = false
+  allocated_storage = 10
+  engine            = "postgres"
+  engine_version    = "13.7"
+  instance_class    = "db.t3.micro"
+  db_name           = "db_name"
+  username          = "user"
+  # To provide the password in secure way...
+  password            = "pass"
+  skip_final_snapshot = true
+  publicly_accessible = false
 }
 
 ## Output public ips of the instances
